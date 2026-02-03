@@ -50,14 +50,16 @@ const App = () => {
         setCurrentUser(user);
     });
 
+    // Main data subscription
     const q = query(collection(db, "listings"), orderBy("createdAt", "desc"), limit(100));
     const unsubscribe = onSnapshot(q, 
         (snapshot) => {
-            setFirestoreListings(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Listing[]);
+            const listingsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Listing[];
+            setFirestoreListings(listingsData);
             setLoading(false);
         }, 
         (err) => {
-            console.warn("Firestore failed:", err);
+            console.error("Firestore connection failed:", err);
             setLoading(false);
         }
     );
@@ -77,8 +79,8 @@ const App = () => {
   }, [isVerifying, countdown]);
 
   const allListings = useMemo(() => {
-    // Use only Firestore data, sorted by date
-    return [...firestoreListings].sort((a, b) => b.createdAt - a.createdAt);
+    // Return all listings from Firestore
+    return firestoreListings;
   }, [firestoreListings]);
 
   const activeListings = useMemo(() => {
@@ -90,14 +92,12 @@ const App = () => {
   }, [allListings]);
 
   const handleStartCreate = (type: 'truck' | 'cargo') => {
-      // Step 1: Force Authentication
       if (!currentUser || currentUser.isAnonymous) {
           setShowAuthModal(true);
           return;
       }
 
-      // Step 2: Check one-time Subscription
-      // We check local storage, but in a production app this could also be a field on the user doc
+      // Check one-time Subscription from local storage
       const isSubscribed = localStorage.getItem(`gruzFura_isSubscribed_${currentUser.uid}`) === 'true';
       
       if (isSubscribed) {
@@ -105,7 +105,6 @@ const App = () => {
           return;
       }
 
-      // Step 3: Trigger Subscription Flow
       setPendingModalType(type);
       setCanConfirm(false);
       setIsVerifying(false);
@@ -120,8 +119,6 @@ const App = () => {
 
   const handleTelegramConfirm = () => {
       if (!canConfirm || !currentUser) return;
-      
-      // Save subscription status for this specific user
       localStorage.setItem(`gruzFura_isSubscribed_${currentUser.uid}`, 'true');
       setShowTelegramModal(false);
       
@@ -150,21 +147,26 @@ const App = () => {
       };
 
       if (isEdit) {
+        // Now allowed by firestore.rules
         await updateDoc(doc(db, "listings", data.id), listingData);
       } else {
         await addDoc(collection(db, "listings"), {
           ...listingData,
           createdAt: Date.now(),
-          expiresAt: Date.now() + (72 * 60 * 60 * 1000) // Default 3 days expiry
+          expiresAt: Date.now() + (72 * 60 * 60 * 1000) // 3 days
         });
       }
 
       setCreateModalType(null);
       setEditingListing(null);
-      setView(data.kind === 'truck' ? 'SEARCH_TRUCK' : 'SEARCH_CARGO');
+      
+      // Auto switch view to see your new post
+      if (!isEdit) {
+        setView(data.kind === 'truck' ? 'SEARCH_TRUCK' : 'SEARCH_CARGO');
+      }
     } catch (e: any) {
-      console.error(e);
-      alert(`Error: ${e.message}`);
+      console.error("Failed to save listing:", e);
+      alert(`Ошибка: ${e.message}`);
     }
   };
 
@@ -184,12 +186,13 @@ const App = () => {
 
   const handleStatusChange = async (id: string, newStatus: ListingStatus) => {
     try {
+        // Now allowed by firestore.rules
         await updateDoc(doc(db, "listings", id), { 
             status: newStatus,
             updatedAt: Date.now()
         });
     } catch (e) {
-        console.error(e);
+        console.error("Failed to update status:", e);
     }
   };
 
