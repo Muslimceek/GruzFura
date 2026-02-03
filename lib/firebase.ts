@@ -25,6 +25,7 @@ try {
 } catch (e) {
     // If Firestore is already initialized (e.g. during development/fast refresh), 
     // retrieve the existing instance instead of re-initializing.
+    console.warn("Firestore already initialized, using existing instance.");
     db = getFirestore(app);
 }
 

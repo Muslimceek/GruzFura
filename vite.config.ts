@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 2000,
+    chunkSizeWarningLimit: 1500,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -14,11 +14,14 @@ export default defineConfig({
             if (id.includes('firebase')) {
               return 'firebase';
             }
-            if (id.includes('react')) {
+            if (id.includes('react') || id.includes('react-dom')) {
               return 'react';
             }
             if (id.includes('@google/genai')) {
               return 'genai';
+            }
+            if (id.includes('lucide-react')) {
+              return 'ui-icons';
             }
             return 'vendor';
           }
