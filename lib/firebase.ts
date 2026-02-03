@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -14,7 +14,20 @@ const firebaseConfig = {
 
 // Initialize Firebase only if not already initialized
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
-const db = getFirestore(app);
+
+let db;
+try {
+    // Attempt to initialize with long polling forced to avoid timeout errors
+    // This addresses "Backend didn't respond within 10 seconds"
+    db = initializeFirestore(app, {
+        experimentalForceLongPolling: true,
+    });
+} catch (e) {
+    // If Firestore is already initialized (e.g. during development/fast refresh), 
+    // retrieve the existing instance instead of re-initializing.
+    db = getFirestore(app);
+}
+
 const auth = getAuth(app);
 
 export { app, db, auth };

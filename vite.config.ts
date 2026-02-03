@@ -6,7 +6,25 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 1500, // увеличьте лимит до 1500 КБ (или больше по необходимости)
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('react')) {
+              return 'react';
+            }
+            if (id.includes('@google/genai')) {
+              return 'genai';
+            }
+            return 'vendor';
+          }
+        }
+      }
+    }
   },
   define: {
     'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
