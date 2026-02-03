@@ -5,6 +5,7 @@ import { CreateForm } from './components/CreateForm';
 import { AuthModal } from './components/AuthModal';
 import { Onboarding } from './components/Onboarding';
 import { useLanguage } from './lib/LanguageContext';
+import { MOCK_LISTINGS } from './services/mockData';
 
 import { collection, addDoc, query, orderBy, limit, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -79,8 +80,10 @@ const App = () => {
   }, [isVerifying, countdown]);
 
   const allListings = useMemo(() => {
-    // Return all listings from Firestore
-    return firestoreListings;
+    // Merge Real Data + Mock Data
+    const combined = [...firestoreListings, ...MOCK_LISTINGS];
+    // Sort by Date Descending (Newest First)
+    return combined.sort((a, b) => b.createdAt - a.createdAt);
   }, [firestoreListings]);
 
   const activeListings = useMemo(() => {
@@ -171,6 +174,12 @@ const App = () => {
   };
 
   const handleDeleteListing = async (id: string) => {
+    // Prevent deleting mock data
+    if (id.startsWith('mock_')) {
+        alert("Демонстрационные данные нельзя удалить.");
+        return;
+    }
+
     if (!window.confirm("Вы уверены, что хотите удалить публикацию?")) return;
     try { 
         await deleteDoc(doc(db, "listings", id)); 
@@ -185,8 +194,8 @@ const App = () => {
   };
 
   const handleStatusChange = async (id: string, newStatus: ListingStatus) => {
+    if (id.startsWith('mock_')) return; // Ignore mock data
     try {
-        // Now allowed by firestore.rules
         await updateDoc(doc(db, "listings", id), { 
             status: newStatus,
             updatedAt: Date.now()
