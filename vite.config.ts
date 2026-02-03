@@ -1,3 +1,4 @@
+
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -7,24 +8,7 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     chunkSizeWarningLimit: 2000,
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('firebase')) {
-              return 'firebase';
-            }
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react';
-            }
-            if (id.includes('@google/genai')) {
-              return 'genai';
-            }
-            return 'vendor';
-          }
-        }
-      }
-    }
+    // Removed manualChunks to avoid initialization order issues with React
   },
   define: {
     // Fallback to empty string to prevent "process is not defined" or JSON parsing errors if env var is missing
