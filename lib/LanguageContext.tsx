@@ -67,7 +67,10 @@ export const LanguageProvider = ({ children }: { children?: ReactNode }) => {
   }, []);
 
   const t = (key: keyof typeof translations['ru']) => {
-    return translations[language][key] || translations['ru'][key] || key;
+    // Cast to any to avoid TS errors when different languages are inferred to have different keys
+    const langDict = translations[language] as any;
+    const defaultDict = translations['ru'] as any;
+    return langDict[key] || defaultDict[key] || key;
   };
 
   return (

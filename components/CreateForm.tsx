@@ -250,7 +250,7 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, initialData
       try {
         const base64 = (reader.result as string).split(',')[1];
         const text = await analyzeLogisticImage(base64, file.type);
-        setComment(prev => prev + '\n[AI SCAN]: ' + text);
+        setComment((prev: string) => prev + '\n[AI SCAN]: ' + text);
         setAiState('success');
       } catch (err) { setAiState('error'); }
       finally { setIsScanning(false); }

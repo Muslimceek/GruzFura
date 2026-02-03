@@ -4,7 +4,7 @@ import {
   Truck, ShieldCheck, Zap, Globe, Package, 
   ArrowRight, Check, Sparkles, BrainCircuit, Users, ChevronRight 
 } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface OnboardingProps {
@@ -205,7 +205,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setTimeout(onComplete, 600);
   };
 
-  const onDragEnd = (info: any) => {
+  const onDragEnd = (info: PanInfo) => {
     if (info.offset.x < -dragThreshold) {
       handleNext();
     } else if (info.offset.x > dragThreshold) {
