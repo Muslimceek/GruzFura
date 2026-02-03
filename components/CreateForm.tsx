@@ -2,14 +2,13 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Truck, Package, Phone, Send, MapPin, Navigation, 
-  BrainCircuit, Sparkles, Loader2, Calendar, Scale, 
+  Sparkles, Loader2, Scale, 
   Box, CreditCard, Camera, Info, AlertCircle, ChevronRight, User,
-  CheckCircle2, HelpCircle, Zap, ShieldCheck, TrendingUp,
-  FileText, Shield, Layers, Thermometer, Maximize, Clock, Globe
+  CheckCircle2, Zap, ShieldCheck, TrendingUp, Layers
 } from 'lucide-react';
-import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
-import { analyzeWithSearch, deepLogisticsAnalysis, analyzeLogisticImage, suggestCities } from '../lib/gemini';
+import { analyzeWithSearch, analyzeLogisticImage, suggestCities } from '../lib/gemini';
 import { TruckType } from '../types';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -37,7 +36,6 @@ const SmartField = ({
   label, 
   icon: Icon, 
   error, 
-  hint, 
   children, 
   className,
   isOptional = false,
@@ -177,10 +175,9 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, initialData
   
   const [cargoType, setCargoType] = useState(initialData?.cargoType || '');
   const [weight, setWeight] = useState(initialData?.weight?.toString() || '');
-  const [volume, setVolume] = useState(initialData?.volume?.toString() || '');
   const [price, setPrice] = useState(initialData?.price?.toString() || '');
-  const [currency, setCurrency] = useState(initialData?.currency || 'UZS');
-  const [hasPrepayment, setHasPrepayment] = useState(initialData?.hasPrepayment || false);
+  const [currency] = useState(initialData?.currency || 'UZS');
+  const [hasPrepayment] = useState(initialData?.hasPrepayment || false);
 
   const [truckType, setTruckType] = useState<TruckType>(initialData?.truckType || TruckType.TENT);
   const [capacity, setCapacity] = useState(initialData?.capacity?.toString() || '');
@@ -190,18 +187,16 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, initialData
   const [contactPhone, setContactPhone] = useState(initialData?.contactPhone || '');
   const [telegram, setTelegram] = useState(initialData?.telegramHandle || '');
 
-  const [hasAdr, setHasAdr] = useState(initialData?.hasAdr || false);
-  const [hasTir, setHasTir] = useState(initialData?.hasTir || false);
-  const [tempRegime, setTempRegime] = useState(initialData?.tempRegime || '');
+  const [hasAdr] = useState(initialData?.hasAdr || false);
+  const [hasTir] = useState(initialData?.hasTir || false);
+  const [tempRegime] = useState(initialData?.tempRegime || '');
 
   // Validation & Suggestions
-  const [errors, setErrors] = useState<Record<string, string | null>>({});
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [citySuggestions, setCitySuggestions] = useState<string[]>([]);
   const [isCityLoading, setIsCityLoading] = useState(false);
 
   // AI State
-  const [aiState, setAiState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
@@ -231,28 +226,24 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, initialData
 
   const handleAIAnalysis = async () => {
     if (!fromCity || !toCity) return;
-    setAiState('loading');
     try {
       const prompt = `Logistics analysis for ${fromCity} to ${toCity}, type: ${type}. Brief advice on pricing and border conditions in ${t('app_title_1') === 'Yuk' ? 'Uzbek' : 'Russian'}.`;
       const result = await analyzeWithSearch(prompt);
       setAiAdvice(result.text);
-      setAiState('success');
-    } catch (e) { setAiState('error'); }
+    } catch (e) { console.error(e); }
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setIsScanning(true);
-    setAiState('loading');
     const reader = new FileReader();
     reader.onloadend = async () => {
       try {
         const base64 = (reader.result as string).split(',')[1];
         const text = await analyzeLogisticImage(base64, file.type);
         setComment((prev: string) => prev + '\n[AI SCAN]: ' + text);
-        setAiState('success');
-      } catch (err) { setAiState('error'); }
+      } catch (err) { console.error(err); }
       finally { setIsScanning(false); }
     };
     reader.readAsDataURL(file);
@@ -339,7 +330,7 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, initialData
                 </SmartField>
 
                 <div className="space-y-4">
-                  <SmartField label={t('label_urgency_level')} icon={Clock}>
+                  <SmartField label={t('label_urgency_level')} icon={Scale}>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {(['urgent', 'today', 'tomorrow', 'planned'] as UrgencyLevel[]).map(level => (
                         <button key={level} type="button" onClick={() => setUrgency(level)} className={cn("py-3 rounded-xl border text-[10px] font-black uppercase transition-all", urgency === level ? "bg-slate-950 text-white border-slate-950 shadow-md" : "bg-white border-slate-200 text-slate-400")}>

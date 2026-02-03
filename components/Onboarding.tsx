@@ -2,9 +2,9 @@
 import React, { useState, useMemo } from 'react';
 import { 
   Truck, ShieldCheck, Zap, Globe, Package, 
-  ArrowRight, Check, Sparkles, BrainCircuit, Users, ChevronRight 
+  Check, Sparkles, BrainCircuit, Users, ChevronRight 
 } from 'lucide-react';
-import { motion, AnimatePresence, useMotionValue, PanInfo } from 'framer-motion';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface OnboardingProps {
@@ -205,7 +205,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     setTimeout(onComplete, 600);
   };
 
-  const onDragEnd = (info: PanInfo) => {
+  const onDragEnd = (_: any, info: PanInfo) => {
     if (info.offset.x < -dragThreshold) {
       handleNext();
     } else if (info.offset.x > dragThreshold) {
@@ -293,7 +293,7 @@ export const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
             exit="exit"
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
-            onDragEnd={(_, info) => onDragEnd(info)}
+            onDragEnd={onDragEnd}
             transition={{ type: 'spring', stiffness: 240, damping: 28 }}
             className="w-full h-full flex flex-col items-center justify-center cursor-grab active:cursor-grabbing"
           >

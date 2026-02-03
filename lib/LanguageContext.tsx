@@ -2,10 +2,12 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { translations, Language } from './translations';
 
+type TranslationKey = keyof typeof translations.ru;
+
 type LanguageContextType = {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: keyof typeof translations['ru']) => string;
+  t: (key: TranslationKey) => string;
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -35,7 +37,6 @@ export const LanguageProvider = ({ children }: { children?: ReactNode }) => {
       };
 
       try {
-        // Primary Attempt: ipapi.co (detailed, but can be blocked)
         const response = await fetch('https://ipapi.co/json/', { mode: 'cors' });
         if (response.ok) {
           const data = await response.json();
@@ -49,7 +50,6 @@ export const LanguageProvider = ({ children }: { children?: ReactNode }) => {
       }
 
       try {
-        // Fallback: Cloudflare trace (very reliable, HTTPS)
         const cfResponse = await fetch('https://www.cloudflare.com/cdn-cgi/trace');
         if (cfResponse.ok) {
           const text = await cfResponse.text();
@@ -59,17 +59,16 @@ export const LanguageProvider = ({ children }: { children?: ReactNode }) => {
           }
         }
       } catch (e) {
-        // If all detection fails, we stick with the default 'ru'
+        // Fallback default
       }
     };
 
     detectRegion();
   }, []);
 
-  const t = (key: keyof typeof translations['ru']) => {
-    // Cast to any to avoid TS errors when different languages are inferred to have different keys
+  const t = (key: TranslationKey) => {
     const langDict = translations[language] as any;
-    const defaultDict = translations['ru'] as any;
+    const defaultDict = translations.ru as any;
     return langDict[key] || defaultDict[key] || key;
   };
 
