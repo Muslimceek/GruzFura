@@ -92,7 +92,7 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, onClose, on
       const details = type === 'cargo' ? `Груз: ${selectedTruckTypes.join(', ')}` : `Машина: ${selectedTruckTypes.join(', ')}`;
       const result = await analyzeRouteWithAI(fromCity, toCity, type, details);
       
-      setAiAdvice(result);
+      setAiAdvice(result ?? null);
       setIsAnalyzing(false);
       
       // Auto-append to comment if successful
