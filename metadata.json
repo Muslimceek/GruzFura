@@ -1,5 +1,7 @@
 {
   "name": "GruzFura - Поиск грузов и транспорта",
   "description": "Бесплатная доска объявлений для логистики. Прямые контакты без посредников. РФ, СНГ.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "geolocation"
+  ]
 }

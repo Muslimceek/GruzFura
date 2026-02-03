@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { TruckListing, CargoListing, Listing, ListingStatus } from '../types';
-// Added Truck icon to the lucide-react imports
-import { Phone, Send, Clock, ShieldCheck, Box, Trash2, ArrowRight, Archive, MapPin, Zap, Truck } from 'lucide-react';
+import { Phone, Send, Clock, ShieldCheck, Box, Trash2, Archive, Zap, Truck } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 
 interface ListingCardProps {
@@ -24,143 +23,132 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, currentUserId
 
   const getTranslatedType = (typeStr: string) => t(`type_${typeStr}` as any) || typeStr;
 
-  // 2026 Design Tokens
   const theme = isTruck ? {
-      accent: 'text-[#1565D8]',
-      accentBg: 'bg-[#1565D8]',
-      grad: 'from-[#1565D8] to-[#0B2136]',
+      accent: 'text-blue-600',
+      accentBg: 'bg-blue-600',
       soft: 'bg-blue-50/50',
-      border: 'border-blue-100/50',
+      border: 'border-blue-100/40',
   } : {
-      accent: 'text-[#FF7A59]',
-      accentBg: 'bg-[#FF7A59]',
-      grad: 'from-[#FF7A59] to-[#0B2136]',
+      accent: 'text-orange-600',
+      accentBg: 'bg-orange-600',
       soft: 'bg-orange-50/50',
-      border: 'border-orange-100/50',
+      border: 'border-orange-100/40',
   };
 
   const containerOpacity = isActive ? 'opacity-100' : 'opacity-60 grayscale-[0.8]';
 
   return (
-    <div 
-        className={`group relative mb-4 isolate w-full transition-all duration-300 ${containerOpacity} tactile-active`}
-    >
-        {/* Modern Card Surface with Subtle Glassmorphism */}
-        <div className={`relative w-full bg-white rounded-[24px] shadow-glass border border-slate-200/50 p-4 transition-all duration-500 hover:shadow-glow-blue overflow-hidden`}>
+    <div className={`group relative w-full transition-all duration-300 ${containerOpacity} tactile-active h-full`}>
+        <div className={`relative w-full h-full bg-white rounded-[24px] shadow-sm border border-slate-200/50 p-4 transition-all duration-300 hover:shadow-lg overflow-hidden flex flex-col`}>
             
-            {/* Urgent Badge - Floating Ribbon style */}
+            {/* Urgent Tag */}
             {isUrgent && isActive && (
-                <div className="absolute -right-8 top-4 rotate-45 bg-red-500 text-white px-10 py-1 text-[9px] font-black uppercase tracking-tighter shadow-lg z-10 flex items-center gap-1">
-                   <Zap size={8} fill="white" /> {t('urgent_header')}
+                <div className="absolute top-0 right-0">
+                    <div className="bg-red-500 text-white pl-3 pr-2 py-1 rounded-bl-2xl text-[8px] font-black uppercase flex items-center gap-1 shadow-md z-20">
+                       <Zap size={8} fill="white" /> {t('urgent_header')}
+                    </div>
                 </div>
             )}
 
-            {/* HEADER: ID & Status */}
-            <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center gap-2">
-                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-white shadow-lg ${theme.accentBg}`}>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className={`h-8 w-8 rounded-xl flex items-center justify-center text-white shadow-sm shrink-0 ${theme.accentBg}`}>
                         {isTruck ? <Truck size={16} /> : <Box size={16} />}
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
                             {isTruck ? t('app_title_2') : t('app_title_1')}
                         </span>
-                        <span className={`text-[11px] font-bold ${theme.accent}`}>
+                        <span className={`text-[11px] font-bold ${theme.accent} truncate leading-none`}>
                             {isTruck ? getTranslatedType(truckData?.truckType || '') : cargoData?.cargoType}
                         </span>
                     </div>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100">
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-50 border border-slate-100 shrink-0">
                     <Clock size={12} className="text-slate-400" />
-                    <span className="text-[11px] font-bold text-slate-600">{listing.date}</span>
+                    <span className="text-[10px] font-black text-slate-500 tabular-nums">{listing.date}</span>
                 </div>
             </div>
 
-            {/* BODY: Route Visualization */}
-            <div className="flex gap-4 mb-5">
-                <div className="flex flex-col items-center gap-1 pt-1">
-                    <div className="w-2.5 h-2.5 rounded-full bg-slate-200 border-2 border-white shadow-sm ring-1 ring-slate-100" />
-                    <div className="w-0.5 flex-1 bg-gradient-to-b from-slate-200 to-transparent rounded-full" />
-                </div>
-                <div className="flex-1 space-y-3">
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('label_from')}</span>
-                        <h3 className="text-[17px] font-black text-[#0B2136] tracking-tight truncate">{listing.fromCity}</h3>
+            {/* Body */}
+            <div className="flex-1 flex items-center gap-4 mb-4">
+                <div className="flex-1 space-y-2 min-w-0">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-2 h-2 rounded-full bg-blue-500 shadow-sm shrink-0" />
+                        <h3 className="text-sm font-black text-slate-800 tracking-tight truncate leading-tight">{listing.fromCity}</h3>
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{t('label_to')}</span>
-                        <h3 className="text-[17px] font-black text-[#0B2136] tracking-tight truncate">{listing.toCity}</h3>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-2 h-2 rounded-full bg-orange-500 shadow-sm shrink-0" />
+                        <h3 className="text-sm font-black text-slate-800 tracking-tight truncate leading-tight">{listing.toCity}</h3>
                     </div>
                 </div>
                 
-                {/* Secondary Info Box */}
-                <div className={`shrink-0 self-center flex flex-col items-end justify-center px-4 py-3 rounded-2xl ${theme.soft} border ${theme.border} min-w-[90px]`}>
+                <div className={`shrink-0 flex flex-col items-center justify-center px-3 py-2 rounded-2xl ${theme.soft} border ${theme.border} min-w-[70px] shadow-sm`}>
                     {isTruck ? (
                         <>
-                            <div className="text-2xl font-black text-slate-900 leading-none">{truckData?.capacity}</div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase">тонн</div>
+                            <span className="text-xl font-black text-slate-900 leading-none mb-0.5">{truckData?.capacity}</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter">TONS</span>
                         </>
                     ) : (
                         <>
-                            <div className="text-lg font-black text-slate-900 leading-none">
-                                {cargoData?.price ? `${cargoData.price.toLocaleString()} ` : 'Договор'}
-                                <span className="text-[10px]">{cargoData?.currency}</span>
-                            </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase mt-1">
-                                {cargoData?.weight}т <span className="opacity-30">/</span> {cargoData?.volume}м³
-                            </div>
+                            <span className="text-[12px] font-black text-slate-900 leading-tight text-center">
+                                {cargoData?.price ? `${cargoData.price.toLocaleString()}` : t('price_negotiable')}
+                            </span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase mt-0.5 tracking-tighter">
+                                {cargoData?.currency || ''} • {cargoData?.weight}T
+                            </span>
                         </>
                     )}
                 </div>
             </div>
 
-            {/* FOOTER: Owner & Quick Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center text-white ring-4 ring-slate-50">
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-auto">
+                <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 border border-slate-200">
                         <ShieldCheck size={14} />
                     </div>
-                    <div className="flex flex-col">
-                        <span className="text-[11px] font-black text-slate-900 truncate max-w-[100px]">{listing.contactName}</span>
-                        <div className="flex items-center gap-1">
-                             <span className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" />
-                             <span className="text-[9px] font-bold text-slate-400 uppercase">Verified</span>
-                        </div>
+                    <div className="flex flex-col min-w-0">
+                        <span className="text-[10px] font-black text-slate-900 truncate">{listing.contactName}</span>
+                        <span className="text-[8px] font-bold text-emerald-500 uppercase flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> {t('verified_badge')}
+                        </span>
                     </div>
                 </div>
 
                 <div className="flex gap-2">
                     {isOwner ? (
-                        <>
+                        <div className="flex gap-1.5">
                              {isActive && onStatusChange && (
                                 <button 
                                     onClick={(e) => { e.stopPropagation(); onStatusChange(listing.id, 'closed'); }}
-                                    className="h-10 w-10 rounded-xl bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors flex items-center justify-center"
+                                    className="h-10 w-10 rounded-xl bg-slate-100 text-slate-500 flex items-center justify-center transition-all active:scale-90"
                                 >
-                                    <Archive size={16} />
+                                    <Archive size={18} />
                                 </button>
                              )}
                              <button 
                                 onClick={(e) => { e.stopPropagation(); onDelete(listing.id); }}
-                                className="h-10 w-10 rounded-xl bg-red-50 text-red-500 hover:bg-red-100 transition-colors flex items-center justify-center"
+                                className="h-10 w-10 rounded-xl bg-red-50 text-red-500 flex items-center justify-center transition-all active:scale-90"
                             >
-                                <Trash2 size={16} />
+                                <Trash2 size={18} />
                             </button>
-                        </>
+                        </div>
                     ) : (
-                        <>
+                        <div className="flex gap-2">
                             <a href={`tel:${listing.contactPhone}`} onClick={(e) => e.stopPropagation()} 
-                               className="h-11 px-5 rounded-xl bg-[#0B2136] text-white flex items-center gap-2 shadow-lg active:scale-95 transition-all">
-                                <Phone size={16} strokeWidth={2.5} />
-                                <span className="text-xs font-black uppercase tracking-widest">{t('btn_call')}</span>
+                               className="h-10 px-4 rounded-xl bg-slate-950 text-white flex items-center gap-2 shadow-lg active:scale-95 transition-all">
+                                <Phone size={14} strokeWidth={3} />
+                                <span className="text-[11px] font-black uppercase tracking-wider">{t('btn_call')}</span>
                             </a>
                             {listing.telegramHandle && (
                                 <a href={`https://t.me/${listing.telegramHandle}`} target="_blank" onClick={(e) => e.stopPropagation()} 
-                                   className="h-11 w-11 rounded-xl bg-[#229ED9] text-white flex items-center justify-center shadow-lg active:scale-95 transition-all">
-                                    <Send size={18} className="-ml-0.5 mt-0.5" />
+                                   className="h-10 w-10 rounded-xl bg-[#229ED9] text-white flex items-center justify-center shadow-lg active:scale-95 transition-all">
+                                    <Send size={16} className="-ml-0.5" />
                                 </a>
                             )}
-                        </>
+                        </div>
                     )}
                 </div>
             </div>

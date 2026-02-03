@@ -1,3 +1,4 @@
+
 export enum TruckType {
   TENT = 'Тент',
   CONTAINER = 'Контейнер',
@@ -5,7 +6,11 @@ export enum TruckType {
   BOARD = 'Борт',
   MEGA = 'Мега',
   PLATFORM = 'Площадка',
-  TANKER = 'Бензовоз'
+  TANKER = 'Бензовоз',
+  ISOTHERM = 'Изотерм',
+  AUTOTRANS = 'Автовоз',
+  GRAIN = 'Зерновоз',
+  WOOD = 'Лесовоз'
 }
 
 export type Currency = 'RUB' | 'USD' | 'UZS' | 'EUR' | 'KZT' | 'KGS';
@@ -35,6 +40,13 @@ export interface BaseListing {
   date: string;
   urgent: boolean;
   comment?: string;
+
+  // Logistics Details
+  urgency?: 'urgent' | 'today' | 'tomorrow' | 'planned';
+  loadingMethod?: 'top' | 'side' | 'back' | 'full';
+  hasAdr?: boolean;
+  hasTir?: boolean;
+  tempRegime?: string;
 }
 
 export interface TruckListing extends BaseListing {

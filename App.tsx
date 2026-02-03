@@ -1,11 +1,14 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { Listing, ViewState, ListingStatus } from './types';
 import { CreateForm } from './components/CreateForm';
+import { AuthModal } from './components/AuthModal';
+import { Onboarding } from './components/Onboarding';
 import { useLanguage } from './lib/LanguageContext';
 import { MOCK_LISTINGS } from './services/mockData';
 
-import { collection, addDoc, query, orderBy, limit, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { collection, addDoc, query, orderBy, limit, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { db, auth } from './lib/firebase';
 
 import { HomeView } from './views/HomeView';
@@ -14,17 +17,20 @@ import { ProfileView } from './views/ProfileView';
 import { TabBar } from './components/TabBar';
 import { TelegramModal } from './components/TelegramModal';
 
-// --- MAIN APP ---
 const App = () => {
   const { t, language, setLanguage } = useLanguage();
 
   const [firestoreListings, setFirestoreListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const [view, setView] = useState<ViewState>('HOME');
   const [createModalType, setCreateModalType] = useState<'truck' | 'cargo' | null>(null);
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  
   const [showTelegramModal, setShowTelegramModal] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [pendingModalType, setPendingModalType] = useState<'truck' | 'cargo' | null>(null);
 
   const [isVerifying, setIsVerifying] = useState(false);
@@ -35,21 +41,16 @@ const App = () => {
   const [searchTo, setSearchTo] = useState('');
 
   useEffect(() => {
-    // Auth Listener with Fallback
-    // CORRECT usage for modular SDK: pass 'auth' as first argument
+    // Check onboarding status
+    const hasSeenOnboarding = localStorage.getItem('gruzFura_onboarding_v2');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+
     const authUnsubscribe = onAuthStateChanged(auth, (user) => {
-        if (user) {
-            setCurrentUser(user);
-        } else {
-            signInAnonymously(auth).catch((err) => {
-                console.warn("Auth failed (offline mode):", err);
-                // Fallback to a mock guest user if auth fails
-                setCurrentUser({ uid: 'guest_' + Math.random().toString(36).slice(2), isAnonymous: true });
-            });
-        }
+        setCurrentUser(user);
     });
 
-    // Firestore Listener with Fallback
     const q = query(collection(db, "listings"), orderBy("createdAt", "desc"), limit(100));
     const unsubscribe = onSnapshot(q, 
         (snapshot) => {
@@ -57,7 +58,7 @@ const App = () => {
             setLoading(false);
         }, 
         (err) => {
-            console.warn("Firestore failed (offline mode):", err);
+            console.warn("Firestore failed:", err);
             setLoading(false);
         }
     );
@@ -78,26 +79,35 @@ const App = () => {
 
   const allListings = useMemo(() => {
     const combined = [...firestoreListings, ...MOCK_LISTINGS];
-    // De-duplicate by ID
     const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
     return unique.sort((a, b) => b.createdAt - a.createdAt);
   }, [firestoreListings]);
 
-  // Derived state for the feed: Only show active and non-expired listings
   const activeListings = useMemo(() => {
       const now = Date.now();
       return allListings.filter(l => 
           l.status === 'active' && 
-          (l.expiresAt ? l.expiresAt > now : true) // Legacy compatibility if expiresAt missing
+          (l.expiresAt ? l.expiresAt > now : true)
       );
   }, [allListings]);
 
   const handleStartCreate = (type: 'truck' | 'cargo') => {
-      const isSubscribed = localStorage.getItem('gruzFura_isSubscribed') === 'true';
+      // Step 1: Force Authentication
+      if (!currentUser || currentUser.isAnonymous) {
+          setShowAuthModal(true);
+          return;
+      }
+
+      // Step 2: Check one-time Subscription
+      // We check local storage, but in a production app this could also be a field on the user doc
+      const isSubscribed = localStorage.getItem(`gruzFura_isSubscribed_${currentUser.uid}`) === 'true';
+      
       if (isSubscribed) {
           setCreateModalType(type);
           return;
       }
+
+      // Step 3: Trigger Subscription Flow
       setPendingModalType(type);
       setCanConfirm(false);
       setIsVerifying(false);
@@ -111,9 +121,12 @@ const App = () => {
   };
 
   const handleTelegramConfirm = () => {
-      if (!canConfirm) return;
-      localStorage.setItem('gruzFura_isSubscribed', 'true');
+      if (!canConfirm || !currentUser) return;
+      
+      // Save subscription status for this specific user
+      localStorage.setItem(`gruzFura_isSubscribed_${currentUser.uid}`, 'true');
       setShowTelegramModal(false);
+      
       if (pendingModalType) {
           setCreateModalType(pendingModalType);
           setPendingModalType(null);
@@ -122,37 +135,33 @@ const App = () => {
 
   const handleCreateListing = async (data: any) => {
     try {
-      // Try to get valid auth, fallback to existing currentUser (which might be mock)
-      if (!auth.currentUser && !currentUser) {
-           try {
-             await signInAnonymously(auth);
-           } catch (e) {
-             console.warn("Could not sign in for creation, using offline user");
-           }
+      if (!currentUser) {
+           setShowAuthModal(true);
+           return;
       }
       
       const cleanData = Object.fromEntries(
         Object.entries(data).filter(([_, v]) => v !== undefined && v !== '')
       );
 
-      const effectiveUser = auth.currentUser || currentUser || { uid: 'offline_user' };
-
-      const newListingData = {
+      const isEdit = !!data.id;
+      const listingData = {
         ...cleanData,
-        creatorId: effectiveUser.uid,
-        createdAt: Date.now()
+        creatorId: currentUser.uid,
+        updatedAt: Date.now()
       };
 
-      try {
-        await addDoc(collection(db, "listings"), newListingData);
-      } catch (dbError) {
-        console.warn("Firestore write failed, updating local state only", dbError);
-        // Fallback: update local state to reflect the new listing immediately
-        const localListing = { id: 'local_' + Date.now(), ...newListingData } as Listing;
-        setFirestoreListings(prev => [localListing, ...prev]);
+      if (isEdit) {
+        await updateDoc(doc(db, "listings", data.id), listingData);
+      } else {
+        await addDoc(collection(db, "listings"), {
+          ...listingData,
+          createdAt: Date.now()
+        });
       }
 
       setCreateModalType(null);
+      setEditingListing(null);
       setView(data.kind === 'truck' ? 'SEARCH_TRUCK' : 'SEARCH_CARGO');
     } catch (e: any) {
       console.error(e);
@@ -161,13 +170,17 @@ const App = () => {
   };
 
   const handleDeleteListing = async (id: string) => {
+    if (!window.confirm("Вы уверены, что хотите удалить публикацию?")) return;
     try { 
         await deleteDoc(doc(db, "listings", id)); 
     } catch (e) { 
         console.error(e);
-        // If local delete fails (e.g. offline), remove from local state
-        setFirestoreListings(prev => prev.filter(l => l.id !== id));
     }
+  };
+
+  const handleEditListing = (listing: Listing) => {
+      setEditingListing(listing);
+      setCreateModalType(listing.kind);
   };
 
   const handleStatusChange = async (id: string, newStatus: ListingStatus) => {
@@ -178,21 +191,26 @@ const App = () => {
         });
     } catch (e) {
         console.error(e);
-        // Local fallback
-        setFirestoreListings(prev => prev.map(l => 
-            l.id === id ? { ...l, status: newStatus, updatedAt: Date.now() } : l
-        ));
     }
+  };
+
+  const handleLogout = async () => {
+      await signOut(auth);
+      setView('HOME');
+  };
+
+  const handleOnboardingComplete = () => {
+    localStorage.setItem('gruzFura_onboarding_v2', 'true');
+    setShowOnboarding(false);
   };
 
   return (
     <div className="h-full w-full bg-[#F7F8FA] text-[#0B2136] font-sans selection:bg-[#1565D8] selection:text-white flex flex-col overflow-hidden relative isolate">
       
-      {/* Global Ambient Background - Fixed 2026 Style */}
+      {showOnboarding && <Onboarding onComplete={handleOnboardingComplete} />}
+
       <div className="fixed inset-0 z-[-1] overflow-hidden pointer-events-none">
-          {/* Primary Blue Aura */}
           <div className="absolute top-[-10%] left-[-20%] w-[80vw] h-[80vw] rounded-full bg-[#1565D8] opacity-[0.04] blur-[100px] animate-pulse" style={{ animationDuration: '8s' }} />
-          {/* Accent Orange Aura */}
           <div className="absolute bottom-[-10%] right-[-20%] w-[80vw] h-[80vw] rounded-full bg-[#FF7A59] opacity-[0.04] blur-[100px] animate-pulse" style={{ animationDuration: '10s' }} />
       </div>
 
@@ -234,9 +252,12 @@ const App = () => {
         {view === 'PROFILE' && (
             <ProfileView 
               currentUser={currentUser} 
-              listings={allListings} // Pass ALL listings (history included)
+              listings={allListings}
               onDelete={handleDeleteListing}
+              onEdit={handleEditListing}
               onStatusChange={handleStatusChange}
+              onLogout={handleLogout}
+              onLoginRequest={() => setShowAuthModal(true)}
             />
         )}
       </main>
@@ -253,10 +274,15 @@ const App = () => {
           />
       )}
 
+      {showAuthModal && (
+        <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      )}
+
       {createModalType && (
         <CreateForm 
             initialType={createModalType}
-            onClose={() => setCreateModalType(null)}
+            initialData={editingListing || undefined}
+            onClose={() => { setCreateModalType(null); setEditingListing(null); }}
             onSubmit={handleCreateListing}
         />
       )}

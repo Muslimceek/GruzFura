@@ -1,5 +1,6 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, initializeFirestore, Firestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore, Firestore, terminate } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
@@ -12,20 +13,22 @@ const firebaseConfig = {
   measurementId: "G-KGZ2RR4598"
 };
 
-// Initialize Firebase only if not already initialized
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 let db: Firestore;
 try {
-    // Attempt to initialize with long polling forced to avoid timeout errors in some environments
+    // initializeFirestore should only be called once.
+    // Use ignoreUndefinedProperties to prevent errors when saving incomplete data.
     db = initializeFirestore(app, {
         experimentalForceLongPolling: true,
+        ignoreUndefinedProperties: true,
     });
 } catch (e) {
-    // If Firestore is already initialized, retrieve the existing instance
+    // If already initialized, get the existing instance
     db = getFirestore(app);
 }
 
 const auth: Auth = getAuth(app);
 
 export { app, db, auth };
+ 
