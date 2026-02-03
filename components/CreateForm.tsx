@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { TruckType, Currency } from '../types';
 import { X, Check, Truck, Package, Phone, Send, ChevronLeft, Zap, User, DollarSign, Sparkles, Loader2, MapPin, Navigation, Calendar, Box, BrainCircuit, ExternalLink } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
-import { analyzeRouteWithAI, getDeepLogisticsAnalysis } from '../lib/gemini';
+import { analyzeRouteWithAI, getDeepLogisticsAnalysis, AIResult } from '../lib/gemini';
 
 interface CreateFormProps {
   initialType: 'truck' | 'cargo';
@@ -50,7 +50,7 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, onClose, on
   // AI State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<string | null>(null);
-  const [citations, setCitations] = useState<string | null>(null);
+  const [citations, setCitations] = useState<{ title: string; uri: string }[] | null>(null);
   
   // Animation state
   const [isVisible, setIsVisible] = useState(false);
@@ -92,19 +92,20 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, onClose, on
       setAiAdvice(null);
       setCitations(null);
       
-      let result;
+      let result: AIResult;
       const details = type === 'cargo' ? `Груз: ${selectedTruckTypes.join(', ')}` : `Машина: ${selectedTruckTypes.join(', ')}`;
       
       if (isDeepMode) {
           const query = `Проведи глубокий логистический анализ маршрута из ${fromCity} в ${toCity} для ${type === 'truck' ? 'фуры' : 'груза'}. Учти текущие очереди на границах, стоимость дизеля и возможные обратки.`;
-          const deepResult = await getDeepLogisticsAnalysis(query);
-          result = { text: deepResult, citations: null };
+          result = await getDeepLogisticsAnalysis(query);
       } else {
           result = await analyzeRouteWithAI(fromCity, toCity, type, details);
       }
       
       setAiAdvice(result.text || null);
-      if (result.citations) setCitations(result.citations);
+      if (result.citations && result.citations.length > 0) {
+        setCitations(result.citations);
+      }
       
       setIsAnalyzing(false);
       
@@ -241,10 +242,23 @@ export const CreateForm: React.FC<CreateFormProps> = ({ initialType, onClose, on
                         {aiAdvice && (
                             <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/50 animate-in fade-in slide-in-from-top-2">
                                 <p className="text-sm font-bold text-indigo-900 leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
-                                {citations && (
-                                    <div className="mt-3 pt-3 border-t border-indigo-100 flex items-center gap-2">
-                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest">Источники:</span>
-                                        <div className="text-[10px] text-indigo-500 flex items-center gap-1" dangerouslySetInnerHTML={{ __html: citations }} />
+                                {citations && citations.length > 0 && (
+                                    <div className="mt-4 pt-3 border-t border-indigo-100">
+                                        <span className="text-[10px] font-black text-indigo-400 uppercase tracking-widest block mb-2">Источники:</span>
+                                        <div className="flex flex-wrap gap-2">
+                                            {citations.map((cite, idx) => (
+                                              <a 
+                                                key={idx} 
+                                                href={cite.uri} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="inline-flex items-center gap-1.5 px-3 py-1 bg-white border border-indigo-100 rounded-full text-[10px] font-bold text-indigo-600 hover:bg-indigo-50 transition-colors shadow-sm"
+                                              >
+                                                {cite.title}
+                                                <ExternalLink size={10} />
+                                              </a>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                             </div>
