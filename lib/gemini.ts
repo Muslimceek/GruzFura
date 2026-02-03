@@ -1,35 +1,16 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Singleton instance holder
-let aiClient: GoogleGenAI | null = null;
-
-// Helper to safely get the AI client
-const getAIClient = () => {
-    if (aiClient) return aiClient;
-
-    const apiKey = process.env.API_KEY;
-    if (!apiKey || apiKey === 'undefined') {
-        console.warn("⚠️ Gemini API Key is missing. AI features will be disabled.");
-        return null;
-    }
-
-    try {
-        aiClient = new GoogleGenAI({ apiKey });
-        return aiClient;
-    } catch (e) {
-        console.error("Failed to initialize Gemini client:", e);
-        return null;
-    }
-};
-
 export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck' | 'cargo', details: string) => {
-  try {
-    const client = getAIClient();
-    
-    if (!client) {
-        return "AI сервис временно недоступен (отсутствует API ключ).";
-    }
+  const apiKey = process.env.API_KEY;
+  
+  if (!apiKey || apiKey === "" || apiKey === "undefined") {
+    console.warn("Gemini API Key is not configured. AI Analysis is disabled.");
+    return "AI сервис временно недоступен (отсутствует ключ API).";
+  }
 
+  try {
+    const ai = new GoogleGenAI({ apiKey });
+    
     const prompt = `
       Ты — логистический эксперт по странам СНГ и РФ.
       Задача: Проанализируй маршрут для грузоперевозок.
@@ -52,18 +33,17 @@ export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck'
       Не используй markdown форматирование, просто текст.
     `;
 
-    const response = await client.models.generateContent({
+    const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {
-        tools: [{ googleSearch: {} }],
-        thinkingConfig: { thinkingBudget: 0 } // Speed over deep thought for this interactions
-      }
+        tools: [{ googleSearch: {} }]
+      },
     });
 
-    return response.text;
+    return response.text || "Не удалось получить анализ маршрута.";
   } catch (error) {
     console.error("AI Analysis failed:", error);
-    return null;
+    return "Ошибка при анализе маршрута через AI.";
   }
 };
