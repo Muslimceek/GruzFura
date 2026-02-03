@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /listings/{listingId} {
+      // 1. Читать могут все (публичная доска)
+      allow read: if true;
+
+      // 2. Создавать могут только авторизованные (даже анонимно)
+      // И мы проверяем, что пользователь записывает свой реальный ID в поле creatorId
+      allow create: if request.auth != null 
+                   && request.resource.data.creatorId == request.auth.uid;
+
+      // 3. Удалять может ТОЛЬКО автор объявления
+      // resource.data.creatorId - это то, что уже записано в базе
+      // request.auth.uid - это ID того, кто пытается удалить
+      allow delete: if request.auth != null 
+                   && resource.data.creatorId == request.auth.uid;
+
+      // 4. Обновление пока запретим (в MVP нет редактирования)
+      allow update: if false;
+    }
+  }
+}

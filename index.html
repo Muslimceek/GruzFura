@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru" class="h-full w-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Груз ↔ Фура 2026</title>
+    <meta name="description" content="Бесплатная доска объявлений для логистики.">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind Config -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            },
+            colors: {
+              electric: {
+                blue: '#2F54EB',
+                violet: '#722ED1',
+                cyan: '#13C2C2',
+              },
+              solar: {
+                orange: '#FA8C16',
+                yellow: '#FADB14',
+                red: '#F5222D',
+              },
+              surface: {
+                light: '#FFFFFF',
+                dim: '#F8F9FA',
+                dark: '#141414',
+              }
+            },
+            spacing: {
+              'safe-top': 'env(safe-area-inset-top)',
+              'safe-bottom': 'env(safe-area-inset-bottom)',
+            },
+            boxShadow: {
+              'glow-blue': '0 10px 40px -10px rgba(47, 84, 235, 0.4)',
+              'glow-orange': '0 10px 40px -10px rgba(250, 140, 22, 0.4)',
+              'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+              'inner-light': 'inset 0 2px 4px 0 rgba(255, 255, 255, 0.3)',
+            },
+            animation: {
+              'mesh': 'meshMove 20s ease infinite alternate',
+            },
+            keyframes: {
+              meshMove: {
+                '0%': { transform: 'translate(0, 0) rotate(0deg)' },
+                '100%': { transform: 'translate(-2%, -2%) rotate(2deg)' },
+              }
+            }
+          }
+        }
+      };
+    </script>
+    <style>
+      html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background: #F3F4F6;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+
+      /* Animated Mesh Background */
+      body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle at 50% 50%, rgba(47, 84, 235, 0.08), transparent 60%),
+                    radial-gradient(circle at 80% 20%, rgba(250, 140, 22, 0.06), transparent 50%);
+        z-index: -1;
+        animation: meshMove 20s ease infinite alternate;
+        pointer-events: none;
+      }
+
+      @keyframes meshMove {
+        0% { transform: translate(0, 0) rotate(0deg); }
+        100% { transform: translate(-2%, -2%) rotate(2deg); }
+      }
+
+      #root {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      
+      input, select, textarea {
+        font-size: 16px !important; 
+        user-select: text; 
+        -webkit-user-select: text;
+      }
+      .selectable { user-select: text; -webkit-user-select: text; }
+
+      /* Tactile Button Press Effect */
+      .tactile-active:active {
+        transform: scale(0.96);
+        box-shadow: inset 0 4px 12px rgba(0,0,0,0.1);
+      }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.39.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
