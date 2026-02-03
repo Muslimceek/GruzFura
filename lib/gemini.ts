@@ -1,12 +1,35 @@
 import { GoogleGenAI } from "@google/genai";
 
-// Initialize Gemini Client
-// Note: In a real production app, API calls should be proxied through a backend to protect the key.
-// For this MVP demo, we use the client-side key provided in the environment.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Singleton instance holder
+let aiClient: GoogleGenAI | null = null;
+
+// Helper to safely get the AI client
+const getAIClient = () => {
+    if (aiClient) return aiClient;
+
+    const apiKey = process.env.API_KEY;
+    if (!apiKey || apiKey === 'undefined') {
+        console.warn("⚠️ Gemini API Key is missing. AI features will be disabled.");
+        return null;
+    }
+
+    try {
+        aiClient = new GoogleGenAI({ apiKey });
+        return aiClient;
+    } catch (e) {
+        console.error("Failed to initialize Gemini client:", e);
+        return null;
+    }
+};
 
 export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck' | 'cargo', details: string) => {
   try {
+    const client = getAIClient();
+    
+    if (!client) {
+        return "AI сервис временно недоступен (отсутствует API ключ).";
+    }
+
     const prompt = `
       Ты — логистический эксперт по странам СНГ и РФ.
       Задача: Проанализируй маршрут для грузоперевозок.
@@ -29,7 +52,7 @@ export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck'
       Не используй markdown форматирование, просто текст.
     `;
 
-    const response = await ai.models.generateContent({
+    const response = await client.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
       config: {

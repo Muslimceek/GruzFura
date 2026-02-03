@@ -27,6 +27,7 @@ export default defineConfig({
     }
   },
   define: {
-    'process.env.API_KEY': JSON.stringify(process.env.API_KEY)
+    // Fallback to empty string to prevent "process is not defined" or JSON parsing errors if env var is missing
+    'process.env.API_KEY': JSON.stringify(process.env.API_KEY || "")
   }
 })
