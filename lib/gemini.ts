@@ -1,49 +1,59 @@
 import { GoogleGenAI } from "@google/genai";
 
-export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck' | 'cargo', details: string) => {
+const getAI = () => {
   const apiKey = process.env.API_KEY;
-  
-  if (!apiKey || apiKey === "" || apiKey === "undefined") {
-    console.warn("Gemini API Key is not configured. AI Analysis is disabled.");
-    return "AI сервис временно недоступен (отсутствует ключ API).";
-  }
+  if (!apiKey || apiKey === "" || apiKey === "undefined") return null;
+  return new GoogleGenAI({ apiKey });
+};
+
+/**
+ * Quick analysis using Flash with Google Search grounding
+ */
+export const analyzeRouteWithAI = async (from: string, to: string, type: 'truck' | 'cargo', details: string) => {
+  const ai = getAI();
+  if (!ai) return "AI сервис недоступен (ключ не найден).";
 
   try {
-    const ai = new GoogleGenAI({ apiKey });
-    
-    const prompt = `
-      Ты — логистический эксперт по странам СНГ и РФ.
-      Задача: Проанализируй маршрут для грузоперевозок.
-      
-      Данные:
-      Откуда: ${from}
-      Куда: ${to}
-      Тип: ${type === 'truck' ? 'Грузовой автомобиль' : 'Груз'}
-      Детали: ${details}
-
-      Используй Google Search, чтобы найти актуальные расстояния и примерные рыночные ставки на 2024-2025 год.
-      
-      Дай ответ в формате, который легко читать (коротко).
-      Обязательно включи:
-      1. Расстояние (км).
-      2. Примерное время в пути (с учетом границ, если есть).
-      3. Рекомендованная рыночная цена (диапазон) в USD или RUB.
-      4. Краткий совет по маршруту (сложности, перевалы, границы).
-
-      Не используй markdown форматирование, просто текст.
-    `;
-
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
-      contents: prompt,
+      contents: `Проанализируй маршрут ${from} -> ${to} для ${type === 'truck' ? 'фуры' : 'груза'}. Детали: ${details}. 
+      Используй поиск для уточнения текущих цен на топливо и ставок 2025 года. Дай краткий ответ: расстояние, цена, время, совет.`,
       config: {
         tools: [{ googleSearch: {} }]
       },
     });
 
-    return response.text || "Не удалось получить анализ маршрута.";
+    // Extract citations if available (Grounding Metadata)
+    const citations = response.candidates?.[0]?.groundingMetadata?.searchEntryPoint?.htmlContent;
+    const text = response.text || "Ошибка получения текста.";
+    
+    return { text, citations };
   } catch (error) {
-    console.error("AI Analysis failed:", error);
-    return "Ошибка при анализе маршрута через AI.";
+    console.error("Flash AI Error:", error);
+    return { text: "Ошибка при быстром анализе.", citations: null };
+  }
+};
+
+/**
+ * Complex reasoning using Pro with Thinking Budget
+ */
+export const getDeepLogisticsAnalysis = async (query: string) => {
+  const ai = getAI();
+  if (!ai) return "AI сервис недоступен.";
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-pro-preview',
+      contents: `Ты эксперт-логист 2026 года. Реши сложную задачу: ${query}. 
+      Продумай риски, оптимальные хабы и юридические нюансы СНГ/РФ.`,
+      config: {
+        thinkingConfig: { thinkingBudget: 32768 }
+      },
+    });
+
+    return response.text;
+  } catch (error) {
+    console.error("Pro AI Error:", error);
+    return "Не удалось выполнить глубокий анализ.";
   }
 };
