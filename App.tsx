@@ -5,7 +5,6 @@ import { CreateForm } from './components/CreateForm';
 import { AuthModal } from './components/AuthModal';
 import { Onboarding } from './components/Onboarding';
 import { useLanguage } from './lib/LanguageContext';
-import { MOCK_LISTINGS } from './services/mockData';
 
 import { collection, addDoc, query, orderBy, limit, onSnapshot, deleteDoc, doc, updateDoc, setDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -78,9 +77,8 @@ const App = () => {
   }, [isVerifying, countdown]);
 
   const allListings = useMemo(() => {
-    const combined = [...firestoreListings, ...MOCK_LISTINGS];
-    const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
-    return unique.sort((a, b) => b.createdAt - a.createdAt);
+    // Use only Firestore data, sorted by date
+    return [...firestoreListings].sort((a, b) => b.createdAt - a.createdAt);
   }, [firestoreListings]);
 
   const activeListings = useMemo(() => {
@@ -156,7 +154,8 @@ const App = () => {
       } else {
         await addDoc(collection(db, "listings"), {
           ...listingData,
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          expiresAt: Date.now() + (72 * 60 * 60 * 1000) // Default 3 days expiry
         });
       }
 
