@@ -5,7 +5,7 @@ import { useLanguage } from './lib/LanguageContext';
 import { MOCK_LISTINGS } from './services/mockData';
 
 import { collection, addDoc, query, orderBy, limit, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import { db, auth } from './lib/firebase';
 
 import { HomeView } from './views/HomeView';
@@ -36,7 +36,8 @@ const App = () => {
 
   useEffect(() => {
     // Auth Listener with Fallback
-    const authUnsubscribe = auth.onAuthStateChanged((user) => {
+    // CORRECT usage for modular SDK: pass 'auth' as first argument
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
         if (user) {
             setCurrentUser(user);
         } else {

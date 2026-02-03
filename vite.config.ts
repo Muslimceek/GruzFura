@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
-    chunkSizeWarningLimit: 1500,
+    chunkSizeWarningLimit: 2000,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -19,9 +19,6 @@ export default defineConfig({
             }
             if (id.includes('@google/genai')) {
               return 'genai';
-            }
-            if (id.includes('lucide-react')) {
-              return 'ui-icons';
             }
             return 'vendor';
           }
