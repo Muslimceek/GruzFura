@@ -152,7 +152,7 @@ export const ListView: React.FC<ListViewProps> = ({ type, listings, searchFrom, 
           </div>
 
           {/* Scrollable Results - Compact Grid */}
-          <div className="flex-1 overflow-y-auto px-4 pb-32 pt-3 no-scrollbar scroll-smooth">
+          <div className="flex-1 overflow-y-auto px-4 pb-32 pt-3 no-scrollbar scroll-smooth-off">
               {filtered.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 opacity-60">
                       <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center shadow-lg border border-white/50">

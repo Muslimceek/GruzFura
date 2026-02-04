@@ -57,7 +57,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ setView, setLanguage, langua
   );
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar scroll-smooth bg-[#F3F4F6]">
+    <div className="h-full overflow-y-auto no-scrollbar bg-[#F3F4F6]">
         <div className="px-6 pt-safe-top pb-32 animate-in fade-in slide-in-from-bottom-4 duration-700">
             
             {/* Header: Logo & Lang */}

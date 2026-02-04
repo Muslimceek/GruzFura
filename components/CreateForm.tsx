@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   X, Truck, Package, Phone, Send, MapPin, Navigation, 
@@ -45,7 +46,7 @@ const SmartField = ({
   icon: any; 
   error?: string | null; 
   hint?: string | null; 
-  children: React.ReactNode; 
+  children?: React.ReactNode; 
   className?: string;
   isOptional?: boolean;
   isValid?: boolean;
